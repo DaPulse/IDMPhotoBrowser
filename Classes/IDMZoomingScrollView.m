@@ -276,10 +276,19 @@
 		[self setZoomScale:self.minimumZoomScale animated:YES];
 		
 	} else {
-		
-		// Zoom in
-		[self zoomToRect:CGRectMake(touchPoint.x, touchPoint.y, 1, 1) animated:YES];
-		
+        // Zoom in
+        CGFloat newZoomScale = self.zoomScale * 3;
+        
+        newZoomScale = MIN(newZoomScale, self.maximumZoomScale);
+        
+        CGFloat w = self.bounds.size.width/newZoomScale;
+        CGFloat h = self.bounds.size.height /newZoomScale;
+        CGFloat x = touchPoint.x-(w/2.0);
+        CGFloat y = touchPoint.y-(h/2.0);
+        
+        CGRect rectTozoom=CGRectMake(x, y, w, h);
+        
+        [self zoomToRect:rectTozoom animated:YES];
 	}
 	
 	// Delay controls
