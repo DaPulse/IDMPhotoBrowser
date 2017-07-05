@@ -20,6 +20,7 @@ We've added both user experience and technical features inspired by Facebook's a
 ## Screenshots
 
 [![Alt][screenshot1_thumb]][screenshot1]    [![Alt][screenshot2_thumb]][screenshot2]    [![Alt][screenshot3_thumb]][screenshot3]    [![Alt][screenshot4_thumb]][screenshot4]    [![Alt][screenshot5_thumb]][screenshot5]
+
 [screenshot1_thumb]: https://raw.github.com/appkraft/IDMPhotoBrowser/master/Screenshots/idmphotobrowser_thumb1.png
 [screenshot1]: https://raw.github.com/appkraft/IDMPhotoBrowser/master/Screenshots/idmphotobrowser_ss1.png
 [screenshot2_thumb]: https://raw.github.com/appkraft/IDMPhotoBrowser/master/Screenshots/idmphotobrowser_thumb2.png
@@ -115,7 +116,7 @@ Others customizations you can make are: use white background color, don't displa
 ``` objective-c    
 browser.useWhiteBackgroundColor = YES;
 browser.displayDoneButton = NO;
-browser.doneBackgroundImage = [UIImage imageNamed:@"IDMPhotoBrowser_customDoneButton.png"];
+browser.doneButtonImage = [UIImage imageNamed:@"IDMPhotoBrowser_customDoneButton.png"];
 ```
 
 If you want to keep the interface shown when the user is scrolling :
@@ -136,6 +137,11 @@ browser.forceHideStatusBar = YES;
 It's possible to disable the vertical dismiss swipe gesture:
 ``` objective-c
 browser.disableVerticalSwipe = YES;
+```
+
+Dismiss the photo browser with a touch (instead of showing/hiding controls):
+``` objective-c
+browser.dismissOnTouch = YES;
 ```
 
 ### Photo Captions
