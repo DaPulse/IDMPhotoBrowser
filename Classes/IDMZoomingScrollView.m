@@ -131,25 +131,15 @@
     // Get image from browser as it handles ordering of fetching
     UIImage *img = [self.photoBrowser imageForPhoto:_photo];
     if (img) {
-        _progressView.alpha = 0;
+        [_progressView setHidden:YES];
         
         // Set image
         UIImage *previousImage = _photoImageView.image;
         _photoImageView.image = img;
         _photoImageView.hidden = NO;
 
-//        CGPoint contentOffset = CGPointZero;
-//        CGFloat zoomScale = 1.0;
-
         if (previousImage != nil) {
             [self addImageChangeAnimation];
-
-//            CGFloat scale = previousImage.size.width / img.size.width;
-//
-////            zoomScale = scale * self.zoomScale;
-//            CGFloat offsetY = scale * self.contentOffset.y;
-//            CGFloat offsetX = scale * self.contentOffset.x;
-//            contentOffset = CGPointMake(offsetX, offsetY);
         }
 
         // Setup photo frame
@@ -162,9 +152,6 @@
 
         // Set zoom to minimum zoom
         [self setMaxMinZoomScalesForCurrentBounds];
-
-//        self.zoomScale = zoomScale;
-//        self.contentOffset = contentOffset;
     } else {
         // Hide image view
         _photoImageView.hidden = YES;

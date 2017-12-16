@@ -165,9 +165,7 @@ caption = _caption;
     __weak typeof(self) wSelf = self;
     [self loadPhotoWithURL:url withCompletion:^{
         [wSelf performSelectorOnMainThread:@selector(imageLoadingComplete) withObject:nil waitUntilDone:NO];
-//        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            [wSelf loadPhotoWithURLAtIndex:index + 1];
-//        });
+        [wSelf loadPhotoWithURLAtIndex:index + 1];
     }];
 }
 
@@ -204,38 +202,6 @@ caption = _caption;
 }
 
 #pragma mark - Async Loading
-
-/*- (UIImage *)decodedImageWithImage:(UIImage *)image {
-    CGImageRef imageRef = image.CGImage;
-    // System only supports RGB, set explicitly and prevent context error
-    // if the downloaded image is not the supported format
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    
-    CGContextRef context = CGBitmapContextCreate(NULL,
-                                                 CGImageGetWidth(imageRef),
-                                                 CGImageGetHeight(imageRef),
-                                                 8,
-                                                 // width * 4 will be enough because are in ARGB format, don't read from the image
-                                                 CGImageGetWidth(imageRef) * 4,
-                                                 colorSpace,
-                                                 // kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little
-                                                 // makes system don't need to do extra conversion when displayed.
-                                                 kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
-    CGColorSpaceRelease(colorSpace);
-    
-    if ( ! context) {
-        return nil;
-    }
-    
-    CGRect rect = (CGRect){CGPointZero, CGImageGetWidth(imageRef), CGImageGetHeight(imageRef)};
-    CGContextDrawImage(context, rect, imageRef);
-    CGImageRef decompressedImageRef = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    
-    UIImage *decompressedImage = [[UIImage alloc] initWithCGImage:decompressedImageRef];
-    CGImageRelease(decompressedImageRef);
-    return decompressedImage;
-}*/
 
 - (UIImage *)decodedImageWithImage:(UIImage *)image {
     if (image.images) {
