@@ -58,7 +58,7 @@
         }
         
         // Progress view
-        _progressView = [[DACircularProgressView alloc] initWithFrame:CGRectMake((screenWidth-35.)/2., (screenHeight-35.)/2, 35.0f, 35.0f)];
+        _progressView = [[DACircularProgressView alloc] initWithFrame:CGRectMake(16, 35, 35.0f, 35.0f)];
         [_progressView setProgress:0.0f];
         _progressView.tag = 101;
         _progressView.thicknessRatio = 0.1;
@@ -82,7 +82,16 @@
 - (void)setPhoto:(id<IDMPhoto>)photo {
     _photoImageView.image = nil; // Release image
     if (_photo != photo) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
+                                                      object:_photo];
+
         _photo = photo;
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(handleImageWillBeginLoading)
+                                                     name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
+                                                   object:_photo];
     }
     [self displayImage];
 }
@@ -95,54 +104,88 @@
 
 #pragma mark - Image
 
+- (void)handleImageWillBeginLoading {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        _progressView.alpha = 1;
+        [_progressView setHidden:NO];
+        [_progressView setProgress:0];
+    });
+}
+
+- (void)addImageChangeAnimation {
+    CATransition *transition = [CATransition animation];
+    transition.duration = 0.25f;
+    transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    transition.type = kCATransitionFade;
+
+    [_photoImageView.layer addAnimation:transition forKey:@"fade"];
+}
+
 // Get and display image
 - (void)displayImage {
-	if (_photo) {
-		// Reset
-		self.maximumZoomScale = 1;
-		self.minimumZoomScale = 1;
-		self.zoomScale = 1;
-        
-		self.contentSize = CGSizeMake(0, 0);
-		
-		// Get image from browser as it handles ordering of fetching
-		UIImage *img = [self.photoBrowser imageForPhoto:_photo];
-		if (img) {
-            // Hide ProgressView
-            //_progressView.alpha = 0.0f;
-            [_progressView removeFromSuperview];
-            
-            // Set image
-			_photoImageView.image = img;
-			_photoImageView.hidden = NO;
-            
-            // Setup photo frame
-			CGRect photoImageViewFrame;
-			photoImageViewFrame.origin = CGPointZero;
-			photoImageViewFrame.size = img.size;
-            
-			_photoImageView.frame = photoImageViewFrame;
-			self.contentSize = photoImageViewFrame.size;
+    if (_photo == nil) {
+        _photoImageView.image = nil;
+        return;
+    }
 
-			// Set zoom to minimum zoom
-			[self setMaxMinZoomScalesForCurrentBounds];
-        } else {
-			// Hide image view
-			_photoImageView.hidden = YES;
-            
-            _progressView.alpha = 1.0f;
-		}
+    // Get image from browser as it handles ordering of fetching
+    UIImage *img = [self.photoBrowser imageForPhoto:_photo];
+    if (img) {
+        _progressView.alpha = 0;
         
-		[self setNeedsLayout];
-	}
+        // Set image
+        UIImage *previousImage = _photoImageView.image;
+        _photoImageView.image = img;
+        _photoImageView.hidden = NO;
+
+//        CGPoint contentOffset = CGPointZero;
+//        CGFloat zoomScale = 1.0;
+
+        if (previousImage != nil) {
+            [self addImageChangeAnimation];
+
+//            CGFloat scale = previousImage.size.width / img.size.width;
+//
+////            zoomScale = scale * self.zoomScale;
+//            CGFloat offsetY = scale * self.contentOffset.y;
+//            CGFloat offsetX = scale * self.contentOffset.x;
+//            contentOffset = CGPointMake(offsetX, offsetY);
+        }
+
+        // Setup photo frame
+        CGRect photoImageViewFrame;
+        photoImageViewFrame.origin = CGPointZero;
+        photoImageViewFrame.size = img.size;
+
+        _photoImageView.frame = photoImageViewFrame;
+        self.contentSize = photoImageViewFrame.size;
+
+        // Set zoom to minimum zoom
+        [self setMaxMinZoomScalesForCurrentBounds];
+
+//        self.zoomScale = zoomScale;
+//        self.contentOffset = contentOffset;
+    } else {
+        // Hide image view
+        _photoImageView.hidden = YES;
+
+        _progressView.alpha = 1.0f;
+    }
+
+    [self setNeedsLayout];
 }
 
 - (void)setProgress:(CGFloat)progress forPhoto:(IDMPhoto*)photo {
     IDMPhoto *p = (IDMPhoto*)self.photo;
 
-    if ([photo.photoURL.absoluteString isEqualToString:p.photoURL.absoluteString]) {
+    NSSet *currentURLs = [NSSet setWithArray:[photo.photoURLs valueForKeyPath:@"absoluteString"]];
+    NSSet *photoURLs = [NSSet setWithArray:[p.photoURLs valueForKeyPath:@"absoluteString"]];
+    if ([currentURLs intersectsSet:photoURLs]) {
         if (_progressView.progress < progress) {
-            [_progressView setProgress:progress animated:YES];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                _progressView.alpha = 1;
+                [_progressView setProgress:progress animated:YES];
+            });
         }
     }
 }
@@ -156,13 +199,13 @@
 
 - (void)setMaxMinZoomScalesForCurrentBounds {
 	// Reset
-	self.maximumZoomScale = 1;
-	self.minimumZoomScale = 1;
-	self.zoomScale = 1;
-    
-	// Bail
-	if (_photoImageView.image == nil) return;
-    
+    self.maximumZoomScale = 1;
+    self.minimumZoomScale = 1;
+    self.zoomScale = 1;
+
+    // Bail
+    if (_photoImageView.image == nil) return;
+
 	// Sizes
 	CGSize boundsSize = self.bounds.size;
 	boundsSize.width -= 0.1;
@@ -209,14 +252,14 @@
     maxDoubleTapZoomScale = MIN(maxDoubleTapZoomScale, maxScale);
     
 	// Set
-	self.maximumZoomScale = minScale * MAX(maxScale, self.minimumZoom);
-	self.minimumZoomScale = minScale;
-	self.zoomScale = minScale;
-	self.maximumDoubleTapZoomScale = maxDoubleTapZoomScale;
-    
-	// Reset position
-	_photoImageView.frame = CGRectMake(0, 0, _photoImageView.frame.size.width, _photoImageView.frame.size.height);
-	[self setNeedsLayout];    
+    self.maximumZoomScale = minScale * MAX(maxScale, self.minimumZoom);
+    self.minimumZoomScale = minScale;
+    self.zoomScale = minScale;
+    self.maximumDoubleTapZoomScale = maxDoubleTapZoomScale;
+
+    // Reset position
+    _photoImageView.frame = CGRectMake(0, 0, _photoImageView.frame.size.width, _photoImageView.frame.size.height);
+    [self setNeedsLayout];    
 }
 
 #pragma mark - Layout
@@ -252,6 +295,10 @@
 }
 
 #pragma mark - UIScrollViewDelegate
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    IDMLog(@"offset: %@", NSStringFromCGPoint(scrollView.contentOffset));
+}
 
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView {
 	return _photoImageView;
@@ -336,6 +383,14 @@
 }
 - (void)view:(UIView *)view doubleTapDetected:(UITouch *)touch {
     [self handleDoubleTap:[touch locationInView:view]];
+}
+
+- (void)dealloc {
+    if (_photo) {
+        [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                        name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
+                                                      object:_photo];
+    }
 }
 
 @end

@@ -35,7 +35,7 @@
 
 // Properties
 @synthesize underlyingImage = _underlyingImage, 
-photoURL = _photoURL,
+photoURLs = _photoURLs,
 caption = _caption;
 
 #pragma mark Class Methods
@@ -95,6 +95,10 @@ caption = _caption;
     return photos;
 }
 
++ (IDMPhoto *)improvingQualityPhotoWithURLs:(NSArray<NSURL *> *)urls {
+    return [[IDMPhoto alloc] initWithURLs:urls];
+}
+
 #pragma mark NSObject
 
 - (id)initWithImage:(UIImage *)image {
@@ -112,10 +116,14 @@ caption = _caption;
 }
 
 - (id)initWithURL:(NSURL *)url {
-	if ((self = [super init])) {
-		_photoURL = [url copy];
-	}
-	return self;
+    return [self initWithURLs:@[url]];
+}
+
+- (id)initWithURLs:(NSArray<NSURL *> *)urls {
+    if (self = [super init]) {
+        _photoURLs = [urls copy];
+    }
+    return self;
 }
 
 #pragma mark IDMPhoto Protocol Methods
@@ -134,22 +142,8 @@ caption = _caption;
         if (_photoPath) {
             // Load async from file
             [self performSelectorInBackground:@selector(loadImageFromFileAsync) withObject:nil];
-        } else if (_photoURL) {
-            // Load async from web (using SDWebImageManager)
-            SDWebImageManager *manager = [SDWebImageManager sharedManager];
-            [manager loadImageWithURL:_photoURL options:SDWebImageRetryFailed|SDWebImageHandleCookies progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
-				CGFloat progress = ((CGFloat)receivedSize)/((CGFloat)expectedSize);
-				
-				if (self.progressUpdateBlock) {
-					self.progressUpdateBlock(progress);
-				}
-			} completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
-				if (image) {
-					self.underlyingImage = image;
-				}
-				
-				[self performSelectorOnMainThread:@selector(imageLoadingComplete) withObject:nil waitUntilDone:NO];
-			}];
+        } else if (_photoURLs) {
+            [self startLoadingPhotoFromURLs];
         } else {
             // Failed - no source
             self.underlyingImage = nil;
@@ -158,11 +152,53 @@ caption = _caption;
     }
 }
 
+- (void)startLoadingPhotoFromURLs {
+    [self loadPhotoWithURLAtIndex:0];
+}
+
+- (void)loadPhotoWithURLAtIndex:(NSInteger)index {
+    if (index == _photoURLs.count) {
+        return;
+    }
+
+    NSURL *url = [_photoURLs objectAtIndex:index];
+    __weak typeof(self) wSelf = self;
+    [self loadPhotoWithURL:url withCompletion:^{
+        [wSelf performSelectorOnMainThread:@selector(imageLoadingComplete) withObject:nil waitUntilDone:NO];
+//        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [wSelf loadPhotoWithURLAtIndex:index + 1];
+//        });
+    }];
+}
+
+- (void)loadPhotoWithURL:(NSURL *)url withCompletion:(void(^)())completion {
+    [[NSNotificationCenter defaultCenter] postNotificationName:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
+                                                        object:self];
+
+    // Load async from web (using SDWebImageManager)
+    SDWebImageManager *manager = [SDWebImageManager sharedManager];
+    [manager loadImageWithURL:url options:SDWebImageRetryFailed|SDWebImageHandleCookies progress:^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
+        CGFloat progress = ((CGFloat)receivedSize)/((CGFloat)expectedSize);
+
+        if (self.progressUpdateBlock) {
+            self.progressUpdateBlock(progress);
+        }
+    } completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
+        if (image) {
+            self.underlyingImage = image;
+        }
+
+        if (completion) {
+            completion();
+        }
+    }];
+}
+
 // Release if we can get it again from path or url
 - (void)unloadUnderlyingImage {
     _loadingInProgress = NO;
 
-	if (self.underlyingImage && (_photoPath || _photoURL)) {
+	if (self.underlyingImage && (_photoPath || _photoURLs.count > 0)) {
 		self.underlyingImage = nil;
 	}
 }

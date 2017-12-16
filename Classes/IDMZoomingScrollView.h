@@ -31,11 +31,8 @@
 @property (nonatomic, strong) IDMTapDetectingImageView *photoImageView;
 @property (nonatomic, strong) IDMCaptionView *captionView;
 @property (nonatomic, strong) id<IDMPhoto> photo;
-//<<<<<<< HEAD
 @property (nonatomic, assign) float minimumZoom;
-//=======
 @property (nonatomic) CGFloat maximumDoubleTapZoomScale;
-//>>>>>>> upstream/master
 
 - (id)initWithPhotoBrowser:(IDMPhotoBrowser *)browser;
 - (void)displayImage;

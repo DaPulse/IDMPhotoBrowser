@@ -13,6 +13,8 @@
 // Used to notify browser display the image
 #define IDMPhoto_LOADING_DID_END_NOTIFICATION @"IDMPhoto_LOADING_DID_END_NOTIFICATION"
 
+#define IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION @"IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION"
+
 // If you wish to use your own data models for photo then they must conform
 // to this protocol. See instructions for details on each method.
 // Otherwise you can use the IDMPhoto object or subclass it yourself to

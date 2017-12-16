@@ -942,21 +942,21 @@ NSLocalizedStringFromTableInBundle((key), nil, [NSBundle bundleWithPath:[[NSBund
 - (void)handleIDMPhotoLoadingDidEndNotification:(NSNotification *)notification {
     id <IDMPhoto> photo = [notification object];
     IDMZoomingScrollView *page = [self pageDisplayingPhoto:photo];
-    if (page) {
-        if ([photo underlyingImage]) {
-            // Successful load
-            [page displayImage];
-            [self loadAdjacentPhotosIfNecessary:photo];
-        } else {
-            // Failed to load
-            [page displayImageFailure];
-            if ([_delegate respondsToSelector:@selector(photoBrowser:imageFailed:imageView:)]) {
-                NSUInteger pageIndex = PAGE_INDEX(page);
-                [_delegate photoBrowser:self imageFailed:pageIndex imageView:page.photoImageView];
-            }
-            // make sure the page is completely updated
-            [page setNeedsLayout];
+    if (page == nil) { return; }
+
+    if ([photo underlyingImage]) {
+        // Successful load
+        [page displayImage];
+        [self loadAdjacentPhotosIfNecessary:photo];
+    } else {
+        // Failed to load
+        [page displayImageFailure];
+        if ([_delegate respondsToSelector:@selector(photoBrowser:imageFailed:imageView:)]) {
+            NSUInteger pageIndex = PAGE_INDEX(page);
+            [_delegate photoBrowser:self imageFailed:pageIndex imageView:page.photoImageView];
         }
+        // make sure the page is completely updated
+        [page setNeedsLayout];
     }
 }
 
