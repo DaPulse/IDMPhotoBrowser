@@ -172,6 +172,10 @@
             dispatch_async(dispatch_get_main_queue(), ^{
                 _progressView.alpha = 1;
                 [_progressView setProgress:progress animated:YES];
+
+                if (progress == 1) {
+                    [_progressView setHidden:YES];
+                }
             });
         }
     }
@@ -284,6 +288,8 @@
 #pragma mark - UIScrollViewDelegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    CGPoint offset = scrollView.contentOffset;
+    _progressView.frame = CGRectMake(offset.x + 15, offset.y + 35, 35, 35);
     IDMLog(@"offset: %@", NSStringFromCGPoint(scrollView.contentOffset));
 }
 
