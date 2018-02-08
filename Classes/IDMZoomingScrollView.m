@@ -82,16 +82,8 @@
 - (void)setPhoto:(id<IDMPhoto>)photo {
     _photoImageView.image = nil; // Release image
     if (_photo != photo) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
-                                                      object:_photo];
-
         _photo = photo;
-
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(handleImageWillBeginLoading)
-                                                     name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
-                                                   object:_photo];
+        [self handleImageWillBeginLoading];
     }
     [self displayImage];
 }
@@ -105,11 +97,9 @@
 #pragma mark - Image
 
 - (void)handleImageWillBeginLoading {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        _progressView.alpha = 1;
-        [_progressView setHidden:NO];
-        [_progressView setProgress:0];
-    });
+    _progressView.alpha = 1;
+    [_progressView setHidden:NO];
+    [_progressView setProgress:0];
 }
 
 - (void)addImageChangeAnimation {
@@ -376,14 +366,6 @@
 }
 - (void)view:(UIView *)view doubleTapDetected:(UITouch *)touch {
     [self handleDoubleTap:[touch locationInView:view]];
-}
-
-- (void)dealloc {
-    if (_photo) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                        name:IDMPhoto_LOADING_WILL_BEGIN_NOTIFICATION
-                                                      object:_photo];
-    }
 }
 
 @end
