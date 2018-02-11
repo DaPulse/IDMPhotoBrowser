@@ -123,25 +123,34 @@
     if (img) {
         [_progressView setHidden:YES];
         
-        // Set image
+        // Save frame
+        CGRect previousFrame;
         UIImage *previousImage = _photoImageView.image;
+        if (previousImage != nil) {
+            previousFrame = _photoImageView.frame;
+        }
+        
+        // Set image
         _photoImageView.image = img;
         _photoImageView.hidden = NO;
-
+        
         if (previousImage != nil) {
-            [self addImageChangeAnimation];
+            // Set original frame
+            _photoImageView.frame = previousFrame;
+            self.contentSize = _photoImageView.frame.size;
+        } else {
+            
+            // Setup photo frame
+            CGRect photoImageViewFrame;
+            photoImageViewFrame.origin = CGPointZero;
+            photoImageViewFrame.size = img.size;
+            
+            _photoImageView.frame = photoImageViewFrame;
+            self.contentSize = photoImageViewFrame.size;
+            
+            // Set zoom to minimum zoom
+            [self setMaxMinZoomScalesForCurrentBounds];
         }
-
-        // Setup photo frame
-        CGRect photoImageViewFrame;
-        photoImageViewFrame.origin = CGPointZero;
-        photoImageViewFrame.size = img.size;
-
-        _photoImageView.frame = photoImageViewFrame;
-        self.contentSize = photoImageViewFrame.size;
-
-        // Set zoom to minimum zoom
-        [self setMaxMinZoomScalesForCurrentBounds];
     } else {
         // Hide image view
         _photoImageView.hidden = YES;
