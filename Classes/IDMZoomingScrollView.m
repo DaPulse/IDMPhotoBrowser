@@ -131,7 +131,7 @@
 // Get and display image
 - (void)displayImage {
     if (_photo == nil) {
-        _photoImageView.image = nil;
+        [_photoImageView displayImage:nil];
         return;
     }
 
@@ -148,7 +148,7 @@
         }
         
         // Set image
-        _photoImageView.image = img;
+        [_photoImageView displayImage:img];//.image = img;
         _photoImageView.hidden = NO;
         
         if (previousImage != nil) {
