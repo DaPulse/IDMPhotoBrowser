@@ -6,7 +6,7 @@ inhibit_all_warnings!
 target "PhotoBrowserDemo" do
 
 pod 'SDWebImage'
-pod 'DFImageManager', '~> 2.0'
+pod 'DFImageManager', :git => 'https://github.com/dapulse/DFImageManager'
 pod 'DFImageManager/GIF'
 pod 'DACircularProgress'
 pod 'pop'
